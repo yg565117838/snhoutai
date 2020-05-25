@@ -1,0 +1,53 @@
+<table class="layui-table">
+    <colgroup>
+        <col width="150">
+        <col width="200">
+        <col>
+    </colgroup>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>分类名称</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{each res}}
+        <tr>
+            <td>{{$value.id}}</td>
+            <td>{{$value.c1name}}</td>
+            <td>
+                <a href="javascript:;">修改</a>
+                |
+                <a href="javascript:;" class="delete" id="{{$value.id}}">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+<script>
+    //Demo
+    layui.use(['form','jquery','layer'], function () {
+        var form = layui.form;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+
+        $('.delete').click(function(){
+            let id = $(this).attr('id')
+
+            if(id){
+                $.get('admin/class1/del',{id},function(res){
+                    if(res == 'success'){
+                        $('#showBody').load('admin/class1/list')
+
+                        layer.msg('删除成功')
+                    }else if(res == 'fail2'){
+                        layer.msg('此分类下有数据，禁止删除，请先删除子数据，再删除此分类')
+                    }else{
+                        layer.msg('删除失败')
+                    }
+                })
+            }
+        })
+    });
+</script>

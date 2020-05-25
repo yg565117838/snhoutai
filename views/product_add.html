@@ -1,0 +1,204 @@
+<form class="layui-form" action="">
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">选择分类</label>
+        <div class="layui-input-block" style="display: flex;">
+            <select name="class1" lay-verify="required" lay-filter="class1" id="class1">
+                <option value="">请选择一级分类</option>
+                {{each res}}
+                <option value="{{$value.id}}">{{$value.c1name}}</option>
+                {{/each}}
+            </select>
+            <select name="class2" lay-verify="required" lay-filter="class2" id="class2">
+                <option value="">请选择二级分类</option>
+            </select>
+            <select name="class3" lay-verify="required" id="class3">
+                <option value="">请选择三级分类</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">产品名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="title" required lay-verify="required" placeholder="请输入产品名称" autocomplete="off"
+                class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">价格</label>
+        <div class="layui-input-inline">
+            <input type="number" name="price" required lay-verify="required" placeholder="请输入价格" autocomplete="off"
+                class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux">元</div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">评论</label>
+        <div class="layui-input-block">
+            <input type="text" name="comment" required lay-verify="required" placeholder="请输入评论" autocomplete="off"
+                class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item layui-form-text">
+        <label class="layui-form-label">描述</label>
+        <div class="layui-input-block">
+            <!--文本编辑器-->
+            <div id="editor">
+                <p>欢迎使用 <b>wangEditor</b> 富文本编辑器</p>
+            </div>
+
+            <textarea name="desc" id="desc" placeholder="请输入内容" class="layui-textarea"
+                style="display: none;"></textarea>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">封面</label>
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn" id="test1">
+                <i class="layui-icon">&#xe67c;</i>上传图片
+            </button>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">轮播图</label>
+        <div class="layui-input-block">
+            <input type="file" name="photo" id="photo" multiple accept="image/*">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<!--引入wangedit-->
+<script src="/wangEditor-3.1.1/release/wangEditor.min.js"></script>
+<script>
+    //Demo
+    layui.use(['form', 'jquery', 'layer', 'upload'], function () {
+        var form = layui.form;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var upload = layui.upload;
+
+        //监听一级分类
+        form.on('select(class1)', function (data) {
+            if (data.value) {
+                $.get('admin/product/getclass2', {
+                    c1id: data.value
+                }, function (data) {
+                    $('#class2').html(data)
+                    form.render('select')
+                })
+            }
+            //重置三级分类
+            $('#class3').html('<option value="">请选择三级分类</option>')
+        })
+
+        //监听二级分类
+        form.on('select(class2)', function (data) {
+            if (data.value) {
+                $.get('admin/product/getclass3', {
+                    c2id: data.value
+                }, function (data) {
+                    $('#class3').html(data)
+                    form.render('select')
+                })
+            }
+        })
+
+        //////////////////////////////////////////////////
+        var E = window.wangEditor
+        var editor = new E('#editor')
+        var $text1 = $('#desc')
+        editor.customConfig.onchange = function (html) {
+            // 监控变化，同步更新到 textarea
+            $text1.val(html)
+        }
+        editor.create()
+        // 初始化 textarea 的值
+        $text1.val(editor.txt.html())
+        //////////////////////////////////////////////////
+
+        //封面
+        var uploadInst = upload.render({
+            elem: '#test1' ,//绑定元素
+            url: 'admin/product/upload' ,//上传接口
+            done: function (res) {
+                //上传完毕回
+                if(res == 1){
+                    layer.msg('上传成功')
+                }else{
+                    layer.msg('上传失败')
+                }
+                
+            },
+            error: function () {
+                //请求异常回调
+            }
+        });
+        
+
+        form.render()
+        //监听提交
+        form.on('submit(formDemo)', function (data) {
+            layer.msg(JSON.stringify(data.field));
+            console.log(data.field)
+            //获取表单值
+            let {class1,class2,class3,title,price,comment,desc} = data.field
+            
+            //文件域
+            let photos = $('#photo')[0].files
+
+            let formData = new FormData()
+            formData.append('class1',class1)
+            formData.append('class2',class2)
+            formData.append('class3',class3)
+            formData.append('title',title)
+            formData.append('price',price)
+            formData.append('comment',comment)
+            formData.append('desc',desc)
+            for(let i=0;i<photos.length;i++){
+                formData.append('photos',photos[i])
+            }
+            $.ajax({
+                url:'admin/product/submint',
+                data:formData,
+                method:'post',
+                contentType:false,
+                processData:false,
+                success:function(data){
+                    if(data == 'success'){
+                        layer.msg('上架成功')
+                        
+                        $('form')[0].reset()
+
+                        editor.txt.html('')
+                    }else{
+                        layer.msg('上架失败')
+                    }
+                },
+                error:function(x,status,err){
+                    console.log(err)
+                }
+            })
+            // $.post('admin/product/submint', data.field, function (res) {
+            //     if (res == 'success') {
+            //         layer.msg('新增成功')
+            //     } else {
+            //         layer.msg('新增失败')
+            //     }
+            // })
+
+
+            return false;
+        });
+    });
+</script>
